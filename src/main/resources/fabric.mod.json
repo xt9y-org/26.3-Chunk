@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "chunkspawn",
+  "version": "${version}",
+  "name": "ChunkSpawn",
+  "description": "Persistent per-chunk and per-dimension mob spawning difficulty overrides.",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "dev.chunkspawn.ChunkSpawn"
+    ]
+  },
+  "mixins": [
+    "chunkspawn.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.19.5",
+    "minecraft": "26.3",
+    "java": ">=25",
+    "fabric-api": "*"
+  }
+}

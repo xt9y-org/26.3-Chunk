@@ -1,0 +1,17 @@
+{
+  "required": true,
+  "package": "dev.chunkspawn.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+    "ChunkSpawningMixin",
+    "MobDespawnMixin",
+    "LocalDifficultyMixin",
+    "SpawnBoundaryMixin",
+    "SpawnEggMixin",
+    "EntityCreationMixin",
+    "NaturalCreationMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

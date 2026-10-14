@@ -1,0 +1,66 @@
+name: Build and release
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: chunkspawn-release
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Java 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.7.1'
+      - name: Build remapped Fabric mod
+        run: gradle --no-daemon --stacktrace build
+      - name: Verify production JAR
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=$(sed -n 's/^version=//p' gradle.properties)
+          jar="build/libs/chunkspawn-26.3-${version}.jar"
+          test -s "$jar"
+          jar tf "$jar" | grep -q 'dev/chunkspawn/ChunkSpawn.class'
+          jar tf "$jar" | grep -q 'chunkspawn.mixins.json'
+          jar tf "$jar" | grep -q 'fabric.mod.json'
+          mkdir -p dist
+          cp "$jar" "dist/ChunkSpawn-${version}-mc26.3.jar"
+      - name: Upload downloadable JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: ChunkSpawn-Fabric-26.3
+          path: dist/*.jar
+          if-no-files-found: error
+      - name: Publish GitHub pre-release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          version=$(sed -n 's/^version=//p' gradle.properties)
+          tag="v${version}"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "Release $tag already exists; bump version in gradle.properties for a new release."
+            exit 0
+          fi
+          gh release create "$tag" dist/*.jar \
+            --target "$GITHUB_SHA" \
+            --title "ChunkSpawn ${tag} (Minecraft 26.3)" \
+            --notes "Fabric mod for Minecraft 26.3. Requires Fabric Loader 0.19.5+ and Fabric API. Experimental: in-game spawning behavior still needs validation." \
+            --prerelease
