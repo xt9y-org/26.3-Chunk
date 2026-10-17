@@ -1,4 +1,4 @@
-# ChunkSpawn
+# 26.3 ChunkSpawn
 
 Fabric mod for Minecraft **26.3**, with per-chunk and per-dimension natural mob-spawning difficulty overrides. Tested via CI compilation; in-game load and despawn behavior still requires validation.
 
@@ -32,4 +32,4 @@ World settings persist at `<world>/chunkspawn/<dimension>.properties`; back up t
 
 Requires Java 25 and Gradle 9.7.1. `gradle build` creates a remapped production JAR in `build/libs/`. GitHub Actions builds on pushes to `main` and publishes a pre-release **only if** the build succeeds.
 
-[GitHub Releases](https://github.com/xt9y-org/Chunky/releases)
+[GitHub Releases](https://github.com/xt9y-org/26.3-Chunk/releases)

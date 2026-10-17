@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "chunkspawn",
   "version": "${version}",
-  "name": "ChunkSpawn",
+  "name": "26.3 ChunkSpawn",
   "description": "Persistent per-chunk and per-dimension mob spawning difficulty overrides.",
   "environment": "*",
   "entrypoints": {

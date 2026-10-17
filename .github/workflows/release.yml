@@ -70,11 +70,11 @@ jobs:
           jar tf "$jar" | grep -q 'chunkspawn.mixins.json'
           jar tf "$jar" | grep -q 'fabric.mod.json'
           mkdir -p dist
-          cp "$jar" "dist/ChunkSpawn-${version}-mc26.3.jar"
+          cp "$jar" "dist/26.3-ChunkSpawn-${version}.jar"
       - name: Upload downloadable JAR
         uses: actions/upload-artifact@v4
         with:
-          name: ChunkSpawn-Fabric-26.3
+          name: 26.3-ChunkSpawn-Fabric
           path: dist/*.jar
           if-no-files-found: error
       - name: Publish GitHub pre-release
@@ -92,6 +92,6 @@ jobs:
           fi
           gh release create "$tag" dist/*.jar \
             --target "$GITHUB_SHA" \
-            --title "ChunkSpawn ${tag} (Minecraft 26.3)" \
+            --title "26.3 ChunkSpawn ${tag}" \
             --notes "Fabric mod for Minecraft 26.3. Requires Fabric Loader 0.19.5+ and Fabric API. Experimental: in-game spawning behavior still needs validation." \
             --prerelease
