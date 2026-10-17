@@ -9,7 +9,8 @@
     "SpawnBoundaryMixin",
     "SpawnEggMixin",
     "EntityCreationMixin",
-    "NaturalCreationMixin"
+    "NaturalCreationMixin",
+    "SavedEntityLoadingMixin"
   ],
   "injectors": {
     "defaultRequire": 1

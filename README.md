@@ -1,17 +1,14 @@
 # ChunkSpawn
 
-Fabric mod for Minecraft **26.3** with persistent per-chunk and per-dimension mob-spawning difficulty overrides.
-
-**Experimental pre-release**: The 1.0.4 source still requires runtime testing. The CI build verifies that it compiles against the actual Fabric/Minecraft dependencies, but cannot prove in-game spawning works.
+Fabric mod for Minecraft **26.3**, with per-chunk and per-dimension natural mob-spawning difficulty overrides. Tested via CI compilation; in-game load and despawn behavior still requires validation.
 
 ## Commands
 
-- `/chunkspawn peaceful|easy|normal|hard` — set the spawn difficulty of the chunk you are standing in.
-- `/chunkspawn all peaceful|easy|normal|hard` — set the default in the current dimension and clear all previous chunk overrides.
-- `/chunkspawn list` — show dimension defaults and chunk overrides.
+- `/chunkspawn peaceful|easy|normal|hard` — set the spawn difficulty in the current chunk.
+- `/chunkspawn all peaceful|easy|normal|hard` — set the current dimension's default and clear its overrides.
+- `/chunkspawn list` — print all settings for the current dimension.
 
-Example (allow only your current chunk in a Peaceful world):
-
+Example:
 ```mcfunction
 /difficulty peaceful
 /chunkspawn all peaceful
@@ -19,20 +16,20 @@ Example (allow only your current chunk in a Peaceful world):
 /chunkspawn list
 ```
 
-Vanilla hostile mob caps, light requirements, player-distance limits, and gamerules still apply. A player standing inside one allowed 16x16 chunk generally prevents natural hostile spawns because of the 24-block player exclusion radius. AFK a suitable distance away while keeping the chunk ticking.
+## Entity survival (v1.0.5)
 
-Structure spawning rules are separate: the mod does not generate witch huts or register their structure bounding boxes.
+Hostile mobs **inside allowed chunks** bypass both global Peaceful removal and normal distance/random despawn checks. Their `PersistenceRequired` flag is **not** set; they continue counting against vanilla natural mob caps. They still die from environmental damage, combat, etc., and are saved normally when chunks unload.
 
-World data is saved per dimension under `<world>/chunkspawn/<dimension>.properties`.
+During saved-entity loading, the mod checks each entity's saved `Pos`. For allowed chunks with a global Peaceful difficulty, it bypasses the create-time Peaceful gate only for `EntitySpawnReason.LOAD`. Mobs in non-allowed chunks retain normal Vanilla behavior. This cannot recover entities already erased from the world's entity files by earlier sessions.
+
+**Important:** Mobs can walk out of a permitted chunk. Once outside, the normal vanilla rules apply (including immediate Peaceful despawn). For an enclosed farm, keep their holding cells in the allowed chunk.
+
+For natural spawning, vanilla caps, light requirements, game rules, and distance tests still apply; players usually need to stand >=24 blocks from the permitted spawn position. The mod does not create a witch-hut structure or bounding box.
+
+World settings persist at `<world>/chunkspawn/<dimension>.properties`; back up the world before using experimental versions.
 
 ## Building and releases
 
-Requires JDK 25 and Gradle 9.7.1. Run `gradle build`; use the remapped production JAR in `build/libs/`, not development or sources JARs.
+Requires Java 25 and Gradle 9.7.1. `gradle build` creates a remapped production JAR in `build/libs/`. GitHub Actions builds on pushes to `main` and publishes a pre-release **only if** the build succeeds.
 
-GitHub Actions runs **Build and release** on every push to `main` and via manual dispatch. If compilation and JAR verification succeed, the workflow uploads the JAR as an Actions artifact and creates a GitHub **pre-release** tagged from the `version` in `gradle.properties` (starting at `v1.0.4`). Failed builds cannot publish a release.
-
-Existing release tags are not overwritten. Bump `version` to create another release.
-
-[Download the latest release](https://github.com/xt9y-org/Chunky/releases)
-
-Back up your world before testing experimental builds.
+[GitHub Releases](https://github.com/xt9y-org/Chunky/releases)
