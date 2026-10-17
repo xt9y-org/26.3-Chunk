@@ -1,0 +1,52 @@
+name: Minecraft server smoke test
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  start-server:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Java 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - name: Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.7.1'
+      - name: Boot Fabric server with ChunkSpawn installed
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p run
+          printf 'eula=true\n' > run/eula.txt
+          timeout --signal=TERM 110s gradle --no-daemon runServer --args=nogui > server-startup.log 2>&1 || exit_code=$?
+          if grep -Eqi 'mixin apply.*failed|InvalidInjectionException|MixinApplyError|Exception in thread|Error loading class' server-startup.log; then
+            echo 'Mixin/runtime error detected:'
+            tail -180 server-startup.log
+            exit 1
+          fi
+          if ! grep -Eq 'Done \(' server-startup.log run/logs/latest.log 2>/dev/null; then
+            echo 'Server did not reach the ready state:'
+            tail -180 server-startup.log
+            exit 1
+          fi
+          echo 'Dedicated Fabric 26.3 server started successfully with ChunkSpawn.'
+      - name: Upload server logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fabric-server-startup
+          path: |
+            server-startup.log
+            run/logs/latest.log
+          if-no-files-found: ignore
