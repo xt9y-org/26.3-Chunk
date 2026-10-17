@@ -27,6 +27,36 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          echo 'Diagnosing mapped EntityType methods from Loom jars'
+          find .gradle "$HOME/.gradle" -type f -name '*.jar' -size +1M -print 2>/dev/null | while IFS= read -r candidate; do
+            if unzip -Z -1 "$candidate" 2>/dev/null | grep -q '^net/minecraft/world/entity/EntityType.class          printf 'eula=true\n' > run/eula.txt
+          timeout --signal=TERM 110s gradle --no-daemon runServer --args=nogui > server-startup.log 2>&1 || exit_code=$?
+          if grep -Eqi 'mixin apply.*failed|InvalidInjectionException|MixinApplyError|Exception in thread|Error loading class' server-startup.log; then
+            echo 'Mixin/runtime error detected:'
+            tail -180 server-startup.log
+            exit 1
+          fi
+          if ! grep -Eq 'Done \(' server-startup.log run/logs/latest.log 2>/dev/null; then
+            echo 'Server did not reach the ready state:'
+            tail -180 server-startup.log
+            exit 1
+          fi
+          echo 'Dedicated Fabric 26.3 server started successfully with ChunkSpawn.'
+      - name: Upload server logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fabric-server-startup
+          path: |
+            server-startup.log
+            run/logs/latest.log
+          if-no-files-found: ignore
+; then
+              echo "MAPPED_ENTITYTYPE_JAR=$candidate"
+              javap -classpath "$candidate" -p net.minecraft.world.entity.EntityType | grep -E 'loadStaticEntity|create\(' || true
+              break
+            fi
+          done
           mkdir -p run
           printf 'eula=true\n' > run/eula.txt
           timeout --signal=TERM 110s gradle --no-daemon runServer --args=nogui > server-startup.log 2>&1 || exit_code=$?
