@@ -12,22 +12,21 @@ import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 /**
- * Vanilla refuses to create most monsters from saved NBT while the world is
- * Peaceful. Read the saved position before creation, and bypass only that
- * difficulty gate for entities saved inside allowed chunks.
- *
- * No global changes to EntityType.isAllowedInPeaceful or to spawn eggs.
+ * The private saved-entity loader calls through lambdas. Rather than targeting
+ * its internal factory call, replace the LOAD request argument at method entry.
+ * This bypasses Peaceful creation checks only for saved positions in allowed
+ * chunks, keeping all other loads subject to vanilla checks.
  */
 @Mixin(EntityType.class)
 public abstract class SavedEntityLoadingMixin {
-    @ModifyArg(
+    @ModifyVariable(
         method = "loadStaticEntity(Lnet/minecraft/world/level/storage/ValueInput;Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/EntitySpawnRequest;)Ljava/util/Optional;",
-        at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/world/entity/EntityType;create(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/EntitySpawnRequest;)Lnet/minecraft/world/entity/Entity;"),
-        index = 1
+        at = @At("HEAD"),
+        argsOnly = true,
+        ordinal = 0
     )
     private static EntitySpawnRequest chunkspawn$loadInAllowedChunk(
         EntitySpawnRequest request, ValueInput data, Level level, EntitySpawnRequest original) {

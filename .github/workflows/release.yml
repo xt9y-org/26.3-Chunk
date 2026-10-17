@@ -28,6 +28,37 @@ jobs:
           gradle-version: '9.7.1'
       - name: Build remapped Fabric mod
         run: gradle --no-daemon --stacktrace build
+      - name: Boot-test Fabric server before release
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p run
+          printf 'eula=true\n' > run/eula.txt
+          gradle --no-daemon runServer --args=nogui > server-startup.log 2>&1 &
+          server_pid=$!
+          ok=false
+          for i in $(seq 1 120); do
+            if grep -Eq 'MixinApplyError|InjectionError|InvalidInjectionException|Failed to start the minecraft server' server-startup.log; then
+              tail -120 server-startup.log
+              kill "$server_pid" 2>/dev/null || true
+              exit 1
+            fi
+            if grep -Eq 'Done \(' server-startup.log; then
+              ok=true
+              break
+            fi
+            if ! kill -0 "$server_pid" 2>/dev/null; then
+              tail -120 server-startup.log
+              exit 1
+            fi
+            sleep 1
+          done
+          kill "$server_pid" 2>/dev/null || true
+          if [ "$ok" != true ]; then
+            tail -120 server-startup.log
+            exit 1
+          fi
+          echo "Minecraft 26.3 server startup OK."
       - name: Verify production JAR
         shell: bash
         run: |
